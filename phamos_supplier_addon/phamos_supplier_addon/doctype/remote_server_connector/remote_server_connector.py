@@ -37,21 +37,16 @@ class RemoteServerConnector(Document):
 	def fetch_work_summary(self, from_date, to_date):
 		url = f"{self.url}/api/method/frappe.desk.reportview.get"
 
-		filters = json.dumps([["Timesheet","owner","=",self.usr],["Timesheet","creation","Between",[from_date,to_date]]])
+		filters = json.dumps([["Timesheet","owner","=",self.usr],["Timesheet Detail","to_time","Between",[from_date,to_date]]])
 
 		data = {
 			'doctype': 'Timesheet',
-			'fields': '["`tabTimesheet`.`project`"]',
+			'fields': '["`tabTimesheet`.`name`","`tabTimesheet Detail`.`project`","`tabTimesheet`.`total_hours`"]',
 			'filters': filters,
-			'order_by': '_aggregate_column desc',
-			'start': '0',
-			'page_length': '1000',
+			'start': 0,
+			'page_length': 200,
 			'view': 'Report',
-			'with_comment_count': 'false',
-			'aggregate_on_field': 'total_hours',
-			'aggregate_on_doctype': 'Timesheet',
-			'aggregate_function': 'sum',
-			'group_by': '`tabTimesheet`.`project`'
+			'with_comment_count': 'false'
 		}
 
 		response = requests.request("POST", url, headers=self.cookie_headers, data=data)

@@ -1,6 +1,6 @@
 import json
 import frappe
-import erpnext
+from collections import defaultdict
 from frappe.utils import cstr, flt, cint
 from frappe.model.meta import get_field_precision
 from phamos_supplier_addon.phamos_supplier_addon.doctype.remote_server_connector.remote_server_connector import RemoteServerConnector
@@ -16,8 +16,17 @@ def fetch_and_process_work_summary(from_date, to_date, amount):
     precision = frappe.db.get_single_value("System Settings", "float_precision")
     # precision = get_field_precision(frappe.get_meta("Sales Invoice Item").get_field("debit"), company_currency)
 
+    work_summary = [[d[1], flt(d[2], precision)] for d in work_summary]
     # frappe.msgprint(cstr(work_summary))
-    work_summary = [[d[0], flt(d[1], precision)] for d in work_summary]
+
+    # Use defaultdict to sum up totals for each project
+    project_totals = defaultdict(float)
+
+    for project, value in work_summary:
+        project_totals[project] += value
+
+    # Convert the dictionary to a list of lists
+    work_summary = [[project, total] for project, total in project_totals.items()]
     # frappe.msgprint(cstr(work_summary))
 
     total_hours = sum([ project[1] for project in work_summary])
@@ -39,6 +48,7 @@ def fetch_and_process_work_summary(from_date, to_date, amount):
 
 
 def get_project_name(project, projects_name, RSC):
+    print("get_project_nameget_project_name", project, projects_name, RSC)
     if projects_name.get(project):
         return projects_name.get(project)
     else:
